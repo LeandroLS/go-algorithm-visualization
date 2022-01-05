@@ -2,15 +2,12 @@ package main
 
 import (
 	"fmt"
+	"image/color"
+	"math/rand"
 
-	"github.com/oakmound/oak/v3/collision"
-)
-
-// Collision labels
-const (
-	// The only collision label we need for this demo is 'ground',
-	// indicating something we shouldn't be able to fall or walk through
-	Ground collision.Label = 1
+	"github.com/oakmound/oak/v3"
+	"github.com/oakmound/oak/v3/render"
+	"github.com/oakmound/oak/v3/scene"
 )
 
 func searchMinIndex(intSlice []int) int {
@@ -37,20 +34,43 @@ func selectionSort(intSlice []int) []int {
 	return sortedSlice
 }
 
+const qtdColorBox = 100
+
+func makeColorBoxes(qtd int) []*render.Sprite {
+	colorBoxes := []*render.Sprite{}
+	for i := 0; i < qtd; i++ {
+		randInt := rand.Intn(100-10) + 10
+		cb := render.NewColorBoxM(1, -randInt, color.White)
+		cb.SetPos(float64(i), 100)
+		colorBoxes = append(colorBoxes, cb)
+	}
+	return colorBoxes
+}
+
+func drawColorBoxes(ctx *scene.Context, colorBox *render.Sprite) {
+	ctx.DrawStack.Draw(colorBox, 0)
+}
+
 func main() {
-	// slice := []int{5, 422, 3, 25, 8, 1, 11, 13}
-	// fmt.Println(searchMin(slice))
-	// fmt.Println(slice[5])
-	fmt.Println(selectionSort([]int{500, 13, 5, 422, 3, 25, 8, 1, 11, 13}))
-	// oak.AddScene("platformer", scene.Scene{Start: func(*scene.Context) {
-
-	// 	ground := entities.NewSolid(0, 400, 500, 20,
-	// 		render.NewColorBox(500, 20, color.RGBA{0, 0, 255, 255}),
-	// 		nil, 0)
-	// 	ground.UpdateLabel(Ground)
-
-	// 	render.Draw(ground.R)
-
-	// }})
-	// oak.Init("platformer")
+	c1 := oak.NewWindow()
+	c1.DrawStack = render.NewDrawStack(render.NewDynamicHeap())
+	c1.FirstSceneInput = color.RGBA{255, 0, 0, 255}
+	c1.AddScene("scene1", scene.Scene{
+		Start: func(ctx *scene.Context) {
+			fmt.Println("Start scene 1")
+			colorBoxes := makeColorBoxes(qtdColorBox)
+			for i := 0; i < len(colorBoxes); i++ {
+				drawColorBoxes(ctx, colorBoxes[i])
+			}
+			dFPS := render.NewDrawFPS(0.1, nil, 600, 10)
+			ctx.DrawStack.Draw(dFPS, 1)
+		},
+	})
+	c1.Init("scene1", func(c oak.Config) (oak.Config, error) {
+		c.Debug.Level = "VERBOSE"
+		c.DrawFrameRate = 1200
+		c.FrameRate = 60
+		c.EnableDebugConsole = true
+		return c, nil
+	})
 }
